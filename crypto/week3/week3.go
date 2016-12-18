@@ -1,29 +1,29 @@
 package main
 
 import (
-	"os"
-	"fmt"
 	"crypto/sha256"
-	"flag"
-	"log"
 	"encoding/hex"
+	"flag"
+	"fmt"
 	"io"
+	"log"
 	"math"
+	"os"
 )
 
 const (
-	BUFFER_BLOCKS = 1024
-	BLOCK_SIZE = 1024
-	HASH_SIZE = sha256.Size
+	BUFFER_BLOCKS     = 1024
+	BLOCK_SIZE        = 1024
+	HASH_SIZE         = sha256.Size
 	HASHED_BLOCK_SIZE = BLOCK_SIZE + HASH_SIZE
 
 	BUFFER_SIZE = BUFFER_BLOCKS * BLOCK_SIZE
 )
 
 var (
-	inputFileName = flag.String("i", "", "Specify the input file name.")
+	inputFileName  = flag.String("i", "", "Specify the input file name.")
 	outputFileName = flag.String("o", "", "Specify the output file name.")
-	verifyFlag = flag.String("v", "", "Hash0 value in hex")
+	verifyFlag     = flag.String("v", "", "Hash0 value in hex")
 )
 
 func EncodeAndHash(inputFileName, outputFileName string) ([]byte, error) {
@@ -39,7 +39,7 @@ func EncodeAndHash(inputFileName, outputFileName string) ([]byte, error) {
 		return nil, fmt.Errorf("Create output file %s failed with: %v\n", outputFileName, err)
 	}
 
-	defer  desFile.Close()
+	defer desFile.Close()
 
 	fileInfo, err := file.Stat()
 	if err != nil {
@@ -59,7 +59,7 @@ func EncodeAndHash(inputFileName, outputFileName string) ([]byte, error) {
 		return nil, fmt.Errorf("Seek file failed with: %v\n", err)
 	}
 	dataBuff := make([]byte, bufferSize)
-	desBuff := make([]byte, (bufferSize-blockSize)/BLOCK_SIZE * (BLOCK_SIZE+HASH_SIZE) + blockSize)
+	desBuff := make([]byte, (bufferSize-blockSize)/BLOCK_SIZE*(BLOCK_SIZE+HASH_SIZE)+blockSize)
 	var hashValue []byte = nil
 
 	if blockSize == 0 {
@@ -82,8 +82,8 @@ func EncodeAndHash(inputFileName, outputFileName string) ([]byte, error) {
 
 		//write to dist file
 		_, err = desFile.Seek((srcLen/BLOCK_SIZE)*(BLOCK_SIZE+HASH_SIZE), 0)
-	//	log.Printf("Seek pos:%d, desBuff len:%d\ndes Buff:%v\n", (srcLen/BLOCK_SIZE)*(BLOCK_SIZE+HASH_SIZE),
-	//	len(desBuff), desBuff)
+		//	log.Printf("Seek pos:%d, desBuff len:%d\ndes Buff:%v\n", (srcLen/BLOCK_SIZE)*(BLOCK_SIZE+HASH_SIZE),
+		//	len(desBuff), desBuff)
 		if err != nil {
 			return nil, fmt.Errorf("Seek dst file failed with: %v\n", err)
 		}
@@ -138,8 +138,8 @@ func DecodeAndVerify(inputFileName, outputFileName string, hashValue *[HASH_SIZE
 		bufferBlocks = srcBlocks
 	}
 
-	srcBuff := make([]byte, HASHED_BLOCK_SIZE * bufferBlocks)
-	desBuff := make([]byte, BLOCK_SIZE * bufferBlocks)
+	srcBuff := make([]byte, HASHED_BLOCK_SIZE*bufferBlocks)
+	desBuff := make([]byte, BLOCK_SIZE*bufferBlocks)
 
 	var blockIndex int = 0
 	for {
@@ -199,7 +199,7 @@ func verifyBlocks(srcBuff []byte, desBuff *[]byte, hashValue *[HASH_SIZE]byte, b
 				j += BLOCK_SIZE
 			}
 
-			*blockIndex ++
+			*blockIndex++
 			remainedSize -= verifyBlockSize
 		} else {
 			return fmt.Errorf("Verify failed at block index %d\n", *blockIndex)
@@ -214,34 +214,34 @@ func verifyBlocks(srcBuff []byte, desBuff *[]byte, hashValue *[HASH_SIZE]byte, b
 }
 
 func processBlocks(srcBuff []byte, desBuff *[]byte, hashValue []byte, blockSize int64) []byte {
-//	log.Print(srcBuff, desBuff, hashValue, blockSize)
-//	log.Print("len srcBuff=", len(srcBuff), "len desBuff=", len(desBuff))
+	//	log.Print(srcBuff, desBuff, hashValue, blockSize)
+	//	log.Print("len srcBuff=", len(srcBuff), "len desBuff=", len(desBuff))
 	srcLen := (int64)(len(srcBuff))
-//	log.Print("srcLen=",srcLen)
-	desOffset := (srcLen-blockSize)/BLOCK_SIZE * (BLOCK_SIZE+HASH_SIZE)
-//	log.Print("desOffset=",desOffset)
+	//	log.Print("srcLen=",srcLen)
+	desOffset := (srcLen - blockSize) / BLOCK_SIZE * (BLOCK_SIZE + HASH_SIZE)
+	//	log.Print("desOffset=",desOffset)
 	if hashValue == nil {
 		*desBuff = (*desBuff)[:desOffset+blockSize]
 	} else {
 		*desBuff = (*desBuff)[:desOffset+blockSize+HASH_SIZE]
 	}
-	for i:=srcLen-blockSize; i>=0; i-=BLOCK_SIZE {
-//		log.Print("i=",i,",desOffset=",desOffset)
+	for i := srcLen - blockSize; i >= 0; i -= BLOCK_SIZE {
+		//		log.Print("i=",i,",desOffset=",desOffset)
 		copy((*desBuff)[desOffset:desOffset+blockSize], srcBuff[i:i+blockSize])
 		if hashValue != nil {
-			copy((*desBuff)[desOffset+blockSize:desOffset+blockSize+HASH_SIZE],hashValue)
-			res := sha256.Sum256((*desBuff)[desOffset:desOffset+blockSize+HASH_SIZE])
+			copy((*desBuff)[desOffset+blockSize:desOffset+blockSize+HASH_SIZE], hashValue)
+			res := sha256.Sum256((*desBuff)[desOffset : desOffset+blockSize+HASH_SIZE])
 			hashValue = res[:]
-//			log.Print("desBuff=", desBuff[desOffset:desOffset+blockSize+HASH_SIZE], "len=", len(desBuff[desOffset:desOffset+blockSize+HASH_SIZE]))
-//			log.Print("hashValue=",hashValue)
+			//			log.Print("desBuff=", desBuff[desOffset:desOffset+blockSize+HASH_SIZE], "len=", len(desBuff[desOffset:desOffset+blockSize+HASH_SIZE]))
+			//			log.Print("hashValue=",hashValue)
 		} else {
-			res := sha256.Sum256((*desBuff)[desOffset:desOffset+blockSize])
+			res := sha256.Sum256((*desBuff)[desOffset : desOffset+blockSize])
 			hashValue = res[:]
-//			log.Print("desBuff=", desBuff[desOffset:desOffset+blockSize], "len=", len(desBuff[desOffset:desOffset+blockSize]))
-//			log.Print("hashValue=",hashValue)
+			//			log.Print("desBuff=", desBuff[desOffset:desOffset+blockSize], "len=", len(desBuff[desOffset:desOffset+blockSize]))
+			//			log.Print("hashValue=",hashValue)
 		}
 
-		desOffset -= (BLOCK_SIZE+HASH_SIZE)
+		desOffset -= (BLOCK_SIZE + HASH_SIZE)
 		blockSize = BLOCK_SIZE
 	}
 
@@ -259,7 +259,7 @@ func main() {
 
 	bVerify := false
 
-	for _,v := range os.Args {
+	for _, v := range os.Args {
 		if v == "-v" {
 			bVerify = true
 		}
