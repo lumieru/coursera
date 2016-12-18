@@ -2,9 +2,9 @@ package main
 
 import (
 	"crypto/aes"
-	"log"
 	"crypto/rand"
 	"encoding/hex"
+	"log"
 )
 
 const (
@@ -13,10 +13,10 @@ const (
 )
 
 type AESData struct {
-	message 	[]byte
-	ciphertext 	[]byte
-	key			[]byte
-	mode 		int
+	message    []byte
+	ciphertext []byte
+	key        []byte
+	mode       int
 }
 
 var datas = [...]AESData{
@@ -28,7 +28,7 @@ var datas = [...]AESData{
 
 func Encrypt() {
 	iv := make([]byte, 16)
-	for i:=0; i<len(datas); i++ {
+	for i := 0; i < len(datas); i++ {
 		binKey := make([]byte, hex.DecodedLen(len(datas[i].key)))
 		_, err := hex.Decode(binKey, datas[i].key)
 		if err != nil {
@@ -51,7 +51,7 @@ func Encrypt() {
 		if datas[i].mode == TYPE_CBC {
 			enc := NewMyCBCEncrypter(aesCiper, iv)
 			dst = make([]byte, enc.EncryptedSize(len(datas[i].message)))
-			enc.CryptBlocks(&dst,  datas[i].message)
+			enc.CryptBlocks(&dst, datas[i].message)
 		} else {
 			enc := NewMyCTR(aesCiper, iv)
 			dst = make([]byte, enc.EncryptedSize(len(datas[i].message)))
@@ -64,7 +64,7 @@ func Encrypt() {
 
 func Decrypt() {
 	iv := make([]byte, 16)
-	for i:=0; i<len(datas); i++ {
+	for i := 0; i < len(datas); i++ {
 		binKey := make([]byte, hex.DecodedLen(len(datas[i].key)))
 		_, err := hex.Decode(binKey, datas[i].key)
 		if err != nil {
@@ -93,7 +93,7 @@ func Decrypt() {
 
 		if datas[i].mode == TYPE_CBC {
 			enc := NewMyCBCDecrypter(aesCiper, iv)
-			enc.CryptBlocks(&dst,  binBuffer)
+			enc.CryptBlocks(&dst, binBuffer)
 		} else {
 			enc := NewMyCTR(aesCiper, iv)
 			enc.XORKeyStream(&dst, binBuffer, false)
