@@ -1,29 +1,31 @@
 <component name="libraryTable">
   <library name="GOPATH &lt;crypto&gt;">
     <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../../../9fans.net" />
+      <root url="file://$PROJECT_DIR$/../../.." />
+      <root url="file://$PROJECT_DIR$/../../../../sourcegraph.com" />
       <root url="file://$PROJECT_DIR$/../../../../hello" />
       <root url="file://$PROJECT_DIR$/../../../../sensedevil.com" />
       <root url="file://$PROJECT_DIR$/../../../../gopkg.in" />
       <root url="file://$PROJECT_DIR$/../../../../code.google.com" />
       <root url="file://$PROJECT_DIR$/../../../../test" />
       <root url="file://$PROJECT_DIR$/../../../../GoServer" />
-      <root url="file://$PROJECT_DIR$/../../.." />
       <root url="file://$PROJECT_DIR$/../../../../golang.org" />
       <root url="file://$PROJECT_DIR$/../../../../goji.io" />
-      <root url="file://$PROJECT_DIR$/../../../../9fans.net" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../../../9fans.net" />
+      <root url="file://$PROJECT_DIR$/../../.." />
+      <root url="file://$PROJECT_DIR$/../../../../sourcegraph.com" />
       <root url="file://$PROJECT_DIR$/../../../../hello" />
       <root url="file://$PROJECT_DIR$/../../../../sensedevil.com" />
       <root url="file://$PROJECT_DIR$/../../../../gopkg.in" />
       <root url="file://$PROJECT_DIR$/../../../../code.google.com" />
       <root url="file://$PROJECT_DIR$/../../../../test" />
       <root url="file://$PROJECT_DIR$/../../../../GoServer" />
-      <root url="file://$PROJECT_DIR$/../../.." />
       <root url="file://$PROJECT_DIR$/../../../../golang.org" />
       <root url="file://$PROJECT_DIR$/../../../../goji.io" />
-      <root url="file://$PROJECT_DIR$/../../../../9fans.net" />
     </SOURCES>
     <excluded>
       <root url="file://$PROJECT_DIR$" />
